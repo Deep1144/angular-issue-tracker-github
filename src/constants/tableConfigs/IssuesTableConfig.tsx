@@ -15,7 +15,7 @@ export const IssuesTableColumns: ColumnsType<IIssues> = [
         title: 'Comment Count',
         dataIndex: 'comments',
         key: 'comments',
-        sortDirections: ['ascend', 'descend'],
+        sortDirections: ['ascend', 'descend', 'ascend'],
         sorter: true,
         defaultSortOrder: 'descend'
     },
