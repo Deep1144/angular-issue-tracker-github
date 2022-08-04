@@ -9,12 +9,21 @@ export interface IIssueList {
     repoUrl: string;
 }
 
+interface IGetIssueList { page: number, sortField: string, sortOrder: 'ascend' | 'descend', state: string }
+
 const IssueList = ({ repoUrl }: IIssueList) => {
     const [repoInfo, setRepoInfo] = useState<any>();
     const [issueList, setIssueList] = useState<IIssues[]>([]);
     const [totalCount, setTotalCount] = useState<number>(0);
     const [loader, setLoader] = useState(false);
     const [paginationLoader, setPaginationLoader] = useState(false);
+
+    const [apiParams, setApiParams] = useState<IGetIssueList>({
+        page: 1,
+        sortField: 'comments',
+        sortOrder: 'descend',
+        state: ''
+    })
 
     useEffect(() => {
         if (repoUrl && !loader && !repoInfo) {
@@ -28,7 +37,7 @@ const IssueList = ({ repoUrl }: IIssueList) => {
             setLoader(true);
             const response = await axios.get('https://api.github.com/repos/' + repoUrl);
             setRepoInfo(response.data);
-            await getIssueList();
+            // await getIssueList();
             setLoader(false);
         } catch (error: any) {
             setLoader(false);
@@ -37,8 +46,19 @@ const IssueList = ({ repoUrl }: IIssueList) => {
     }
 
 
-    const getIssueList = async (page = 1, pageSize = 30, sortField = 'comments', sortOrder: 'ascend' | 'descend' = 'descend', state: string = '') => {
+    useEffect(() => {
+        getIssueList(apiParams);
+    }, [apiParams])
+
+
+    const getIssueList = async (params: IGetIssueList = {
+        page: 1,
+        sortField: 'comments',
+        sortOrder: 'descend',
+        state: ''
+    }) => {
         try {
+            const { page, sortField, sortOrder, state } = params;
             const order = sortOrder === 'descend' ? 'desc' : 'asc';
             setPaginationLoader(true);
 
@@ -48,7 +68,6 @@ const IssueList = ({ repoUrl }: IIssueList) => {
             }
             const response = await axios.get(apiUrl, {
                 params: {
-                    per_page: pageSize,
                     page,
                     sort: sortField,
                     order
@@ -65,7 +84,8 @@ const IssueList = ({ repoUrl }: IIssueList) => {
     }
 
 
-    const handleTableStateChange = (pagination: any, filters: any, sorter: any) => {
+    const handleTableStateChange = (pagination: any, filters: any, sorter: any, extra: { action: string, currentDataSource: Array<IIssues> }) => {
+        console.log({ sorter })
         let state = '';
 
         // If 1 item is selected in filter of state,  say open or closed then we include the filter
@@ -74,9 +94,13 @@ const IssueList = ({ repoUrl }: IIssueList) => {
             state = filters['state'][0];
         }
 
-        if (sorter?.column && sorter?.order) {
-            getIssueList(pagination.current, pagination.pageSize, sorter.key, sorter?.order, state);
+        const params = {
+            state,
+            sortOrder: sorter?.order,
+            sortField: sorter.columnKey,
+            page: extra.action === "sort" ? 1 : pagination.current // reset page on sorting
         }
+        setApiParams(params);
     }
 
     return (
@@ -102,6 +126,7 @@ const IssueList = ({ repoUrl }: IIssueList) => {
                             pagination={{
                                 total: totalCount,
                                 pageSize: 30,
+                                current: apiParams.page,
                                 pageSizeOptions: [],
                             }} />
                     </div>
