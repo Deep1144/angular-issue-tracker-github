@@ -1,83 +1,19 @@
-import { Spin, Table, TableProps } from 'antd';
+import { Spin, Table } from 'antd';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify';
-import { Space, Tag } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import { IIssues } from '../models/Issues';
-
-const columns: ColumnsType<IIssues> = [
-    {
-        title: 'Title',
-        dataIndex: 'title',
-        key: 'title',
-        render: (text, record) => <a href={record.html_url} target={'_blank'}>{text}</a>,
-    },
-    {
-        title: 'Comment Count',
-        dataIndex: 'comments',
-        key: 'comments',
-        sortDirections: ['ascend', 'descend'],
-        sorter: true,
-        defaultSortOrder: 'descend'
-    },
-    {
-        title: 'Issue Number',
-        dataIndex: 'number',
-        key: 'number',
-        render: (text, record) => <a href={record.html_url} target={'_blank'}>#{text}</a>
-    },
-    {
-        title: 'State',
-        dataIndex: 'state',
-        key: 'state',
-        render: (text) => {
-            let color = 'green'
-            if (text === 'open') {
-                color = 'red';
-            }
-            return (
-                <Tag color={color} key={text}>
-                    {text.toUpperCase()}
-                </Tag>
-            );
-        },
-        filters: [
-            {
-                text: <span>Closed</span>,
-                value: 'closed',
-            },
-            {
-                text: <span>Open</span>,
-                value: 'open',
-            },
-        ],
-        filterSearch: true,
-    },
-    {
-        title: 'Date',
-        dataIndex: 'date',
-        width: '15%',
-        render: (text, record) => {
-            let data = record.state === 'closed' ? 'Closed at: ' + new Date(record.closed_at).toDateString() : 'Created at: ' + new Date(record.created_at).toDateString();
-            return data;
-        }
-    }
-];
-
+import { IssuesTableColumns } from '../constants/tableConfigs/IssuesTableConfig';
 
 export interface IIssueList {
     repoUrl: string;
 }
 
 const IssueList = ({ repoUrl }: IIssueList) => {
-
     const [repoInfo, setRepoInfo] = useState<any>();
     const [issueList, setIssueList] = useState<IIssues[]>([]);
     const [totalCount, setTotalCount] = useState<number>(0);
-
     const [loader, setLoader] = useState(false);
-
     const [paginationLoader, setPaginationLoader] = useState(false);
 
     useEffect(() => {
@@ -94,12 +30,10 @@ const IssueList = ({ repoUrl }: IIssueList) => {
             setRepoInfo(response.data);
             await getIssueList();
             setLoader(false);
-            console.log({ response })
         } catch (error: any) {
             setLoader(false);
             toast.error(error.message);
         }
-
     }
 
 
@@ -134,7 +68,7 @@ const IssueList = ({ repoUrl }: IIssueList) => {
     const handleTableStateChange = (pagination: any, filters: any, sorter: any) => {
         let state = '';
 
-        // if 1 item is selected say open of closed then we include the filter
+        // If 1 item is selected in filter of state,  say open or closed then we include the filter
         // otherwise by default it will return all issues
         if (filters['state'] && filters['state'].length === 1) {
             state = filters['state'][0];
@@ -154,7 +88,6 @@ const IssueList = ({ repoUrl }: IIssueList) => {
                 </div>
             }
 
-
             {
                 !loader && repoInfo &&
                 <div className='justify-center flex container my-20 mx-auto flex-col items-center'>
@@ -164,7 +97,7 @@ const IssueList = ({ repoUrl }: IIssueList) => {
 
 
                     <div className='mt-20'>
-                        <Table dataSource={issueList} columns={columns} loading={paginationLoader}
+                        <Table dataSource={issueList} columns={IssuesTableColumns} loading={paginationLoader}
                             onChange={handleTableStateChange}
                             pagination={{
                                 total: totalCount,
