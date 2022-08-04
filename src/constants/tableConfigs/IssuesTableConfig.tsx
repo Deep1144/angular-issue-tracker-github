@@ -23,7 +23,7 @@ export const IssuesTableColumns: ColumnsType<IIssues> = [
         title: 'Issue Number',
         dataIndex: 'number',
         key: 'number',
-        render: (text, record) => <a href={record.html_url} target={'_blank'}>#{text}</a>
+        render: (text, record) => <Link to={`/issue/${record.number}`} >{text}</Link>,
     },
     {
         title: 'State',
